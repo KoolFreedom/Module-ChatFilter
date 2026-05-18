@@ -72,7 +72,7 @@ public class ChatFilterModule extends PlexModule
     {
         for (Player player : Bukkit.getOnlinePlayers())
         {
-            if (!player.hasPermission("kfc.admin")) continue;
+            if (!player.hasPermission("plex.chatfilter.admin")) continue;
 
             player.sendMessage(Component.newline()
                     .append(Component.text("[", NamedTextColor.DARK_GRAY))

@@ -18,16 +18,16 @@ repositories {
 dependencies {
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
-    compileOnly("io.papermc.paper:paper-api:1.21.7-R0.1-SNAPSHOT")
-    compileOnly("dev.plex:server:1.5")
+    compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
+    compileOnly("dev.plex:server:1.7-SNAPSHOT")
 }
 
 group = "dev.plex"
 version = "1.0"
-description = "ExampleModule"
+description = "Module-ChatFilter"
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
 }
 
 publishing {
