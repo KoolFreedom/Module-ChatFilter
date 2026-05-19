@@ -39,7 +39,7 @@ publishing {
 }
 
 tasks.getByName<Jar>("jar") {
-    archiveBaseName.set("Module-ExampleModule")
+    archiveBaseName.set("Module-ChatFilter")
     archiveVersion.set("")
 }
 

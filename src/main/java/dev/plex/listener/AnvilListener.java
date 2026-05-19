@@ -1,14 +1,12 @@
 package dev.plex.listener;
 
 import dev.plex.ChatFilterModule;
-import dev.plex.cache.DataUtils;
 import dev.plex.filter.FilterEngine;
 import dev.plex.filter.FilterResult;
 import dev.plex.player.PlexPlayer;
 import dev.plex.util.PlexUtils;
 import dev.plex.utilities.FilterUtils;
 import dev.plex.utilities.ViolationSource;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -16,7 +14,7 @@ import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-public class FilterListener extends PlexListener
+public class AnvilListener extends PlexListener
 {
     @EventHandler @SuppressWarnings("deprecation")
     public void onAnvilRename(InventoryClickEvent event)

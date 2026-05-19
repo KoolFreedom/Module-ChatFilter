@@ -3,7 +3,10 @@ package dev.plex;
 import dev.plex.cache.DataUtils;
 import dev.plex.command.ObliterateCommand;
 import dev.plex.config.ModuleConfig;
-import dev.plex.listener.FilterListener;
+import dev.plex.listener.AnvilListener;
+import dev.plex.listener.ChatListener;
+import dev.plex.listener.CommandPreProcessListener;
+import dev.plex.listener.SignListener;
 import dev.plex.module.PlexModule;
 import dev.plex.player.PlexPlayer;
 import dev.plex.punishment.Punishment;
@@ -36,7 +39,10 @@ public class ChatFilterModule extends PlexModule
     public void enable()
     {
         registerCommand(new ObliterateCommand());
-        registerListener(new FilterListener());
+        registerListener(new AnvilListener());
+        registerListener(new ChatListener());
+        registerListener(new CommandPreProcessListener());
+        registerListener(new SignListener());
 
         addDefaultMessage("castingOblivion", "<red>{0} is casting oblivion over {1}", "0 - The command sender", "1 - The target");
         addDefaultMessage("playerEviscerated", "<red>{1} will be completely eviscerated", "1 - The target");
