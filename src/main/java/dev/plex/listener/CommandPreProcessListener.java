@@ -8,6 +8,7 @@ import dev.plex.util.PlexUtils;
 import dev.plex.utilities.FilterUtils;
 import dev.plex.utilities.ViolationSource;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
@@ -16,7 +17,8 @@ public class CommandPreProcessListener extends PlexListener
     @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent event)
     {
-        PlexPlayer player = (PlexPlayer) event.getPlayer();
+        Player player = event.getPlayer();
+        PlexPlayer plexPlayer = plugin.getPlayerCache().getPlexPlayer(player.getUniqueId());
         String msg = event.getMessage(); // full command including leading slash
 
         // Remove the leading slash
@@ -33,18 +35,18 @@ public class CommandPreProcessListener extends PlexListener
 
         Bukkit.getScheduler().runTask(plugin, () ->
         {
-            if (!player.getPlayer().isOnline())
+            if (!player.isOnline())
             {
                 return; // do nothing... cause what else could you do
             }
 
-            ChatFilterModule.punishPlayer(player, ViolationSource.Anvil);
-            FilterUtils.filterTriggeredAlert(player, ViolationSource.Anvil);
+            ChatFilterModule.punishPlayer(plexPlayer, ViolationSource.Anvil);
+            FilterUtils.filterTriggeredAlert(plexPlayer, ViolationSource.Anvil);
             ChatFilterModule.logFilteredMessage(PlexUtils.mmDeserialize(
                     "<red>Player " + player + " has been permanently banned for executing /" + content));
-            FilterUtils.discordAlert(player, ViolationSource.Anvil);
-            FilterUtils.crashPlayer(player.getPlayer());
-            player.getPlayer().kick(FilterUtils.kickMessage(ViolationSource.Anvil));
+            FilterUtils.discordAlert(plexPlayer, ViolationSource.Anvil);
+            FilterUtils.crashPlayer(player);
+            player.kick(FilterUtils.kickMessage(ViolationSource.Anvil));
         });
     }
 }

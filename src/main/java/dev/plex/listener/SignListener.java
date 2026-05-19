@@ -8,6 +8,7 @@ import dev.plex.util.PlexUtils;
 import dev.plex.utilities.FilterUtils;
 import dev.plex.utilities.ViolationSource;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.SignChangeEvent;
 
@@ -17,7 +18,8 @@ public class SignListener extends PlexListener
     @SuppressWarnings("deprecation")
     public void onSignWrite(SignChangeEvent event)
     {
-        PlexPlayer player = (PlexPlayer) event.getPlayer();
+        Player player = event.getPlayer();
+        PlexPlayer plexPlayer = plugin.getPlayerCache().getPlexPlayer(player.getUniqueId());
 
         for (String line : event.getLines())
         {
@@ -28,15 +30,15 @@ public class SignListener extends PlexListener
 
                 Bukkit.getScheduler().runTask(plugin, () ->
                 {
-                    if (!player.getPlayer().isOnline()) return;
+                    if (!player.isOnline()) return;
 
-                    ChatFilterModule.punishPlayer(player, ViolationSource.Anvil);
-                    FilterUtils.filterTriggeredAlert(player, ViolationSource.Anvil);
+                    ChatFilterModule.punishPlayer(plexPlayer, ViolationSource.Anvil);
+                    FilterUtils.filterTriggeredAlert(plexPlayer, ViolationSource.Anvil);
                     ChatFilterModule.logFilteredMessage(PlexUtils.mmDeserialize(
                             "<red>Player " + player + " has been permanently banned writing  '" + line + "' on a sign"));
-                    FilterUtils.discordAlert(player, ViolationSource.Anvil);
-                    FilterUtils.crashPlayer(player.getPlayer());
-                    player.getPlayer().kick(FilterUtils.kickMessage(ViolationSource.Anvil));
+                    FilterUtils.discordAlert(plexPlayer, ViolationSource.Anvil);
+                    FilterUtils.crashPlayer(player);
+                    player.kick(FilterUtils.kickMessage(ViolationSource.Anvil));
                 });
                 return;
             }

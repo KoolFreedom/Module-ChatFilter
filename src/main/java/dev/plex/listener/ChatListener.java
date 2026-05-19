@@ -1,6 +1,7 @@
 package dev.plex.listener;
 
 import dev.plex.ChatFilterModule;
+import dev.plex.cache.PlayerCache;
 import dev.plex.filter.FilterEngine;
 import dev.plex.filter.FilterResult;
 import dev.plex.player.PlexPlayer;
@@ -17,7 +18,8 @@ public class ChatListener extends PlexListener
     @EventHandler
     @SuppressWarnings("deprecation")
     private void onPlayerChatMessageThatIsASlur(AsyncPlayerChatEvent event) {
-        PlexPlayer player = (PlexPlayer) event.getPlayer();
+        Player player = event.getPlayer();
+        PlexPlayer plexPlayer = plugin.getPlayerCache().getPlexPlayer(player.getUniqueId());
         String rawMessage = event.getMessage();
 
         FilterResult result = FilterEngine.check(rawMessage);
@@ -27,18 +29,18 @@ public class ChatListener extends PlexListener
         event.setCancelled(true);
 
         // Echo back the "unfiltered format" so players see what they said
-        player.getPlayer().sendMessage(String.format(event.getFormat(), player.getPlayer().getDisplayName(), rawMessage));
+        player.sendMessage(String.format(event.getFormat(), player.getDisplayName(), rawMessage));
 
         Bukkit.getScheduler().runTask(plugin, () -> {
-            if (!player.getPlayer().isOnline()) return;
+            if (!player.isOnline()) return;
 
-            ChatFilterModule.punishPlayer(player, ViolationSource.Chat);
-            FilterUtils.filterTriggeredAlert(player, ViolationSource.Chat);
+            ChatFilterModule.punishPlayer(plexPlayer, ViolationSource.Chat);
+            FilterUtils.filterTriggeredAlert(plexPlayer, ViolationSource.Chat);
             ChatFilterModule.logFilteredMessage(PlexUtils.mmDeserialize(
                     "<red>Player " + player + " has been permanently banned for saying " + rawMessage));
-            FilterUtils.discordAlert(player, ViolationSource.Chat);
-            FilterUtils.crashPlayer(player.getPlayer());
-            player.getPlayer().kick(FilterUtils.kickMessage(ViolationSource.Chat));
+            FilterUtils.discordAlert(plexPlayer, ViolationSource.Chat);
+            FilterUtils.crashPlayer(player);
+            player.kick(FilterUtils.kickMessage(ViolationSource.Chat));
         });
     }
 }
