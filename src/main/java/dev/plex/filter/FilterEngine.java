@@ -1,7 +1,6 @@
 package dev.plex.filter;
 
 import dev.plex.ChatFilterModule;
-import dev.plex.util.PlexLog;
 
 import java.text.Normalizer;
 import java.util.HashMap;
@@ -18,13 +17,13 @@ public final class FilterEngine
     {
         RULES.clear();
 
-        for (String rule :ChatFilterModule.getModule().getConfig().getStringList("blocked-terms"))
+        for (String rule : ChatFilterModule.getModule().getConfig().getStringList("blocked-terms"))
         {
             String clean = sanitize(rule);
             String regex = "\\b" + Pattern.quote(clean) + "\\b";
             RULES.put(rule, Pattern.compile(regex));
         }
-        PlexLog.log("Filter engine reloaded.");
+        ChatFilterModule.getApi().logging().info("Filter engine reloaded.");
     }
 
     public static FilterResult check(String input)

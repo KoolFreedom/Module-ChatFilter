@@ -1,20 +1,21 @@
 package dev.plex;
 
-import dev.plex.cache.DataUtils;
+import dev.plex.api.PlexApi;
+import dev.plex.api.player.PlexPlayerView;
+import dev.plex.api.punishment.PunishmentRequest;
 import dev.plex.command.ObliterateCommand;
 import dev.plex.config.ModuleConfig;
+import dev.plex.filter.FilterEngine;
 import dev.plex.listener.AnvilListener;
 import dev.plex.listener.ChatListener;
 import dev.plex.listener.CommandPreProcessListener;
 import dev.plex.listener.SignListener;
 import dev.plex.module.PlexModule;
-import dev.plex.player.PlexPlayer;
-import dev.plex.punishment.Punishment;
-import dev.plex.punishment.PunishmentType;
-import dev.plex.util.PlexLog;
+import dev.plex.api.punishment.PunishmentType;
 import dev.plex.utilities.ViolationSource;
 import lombok.Getter;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import net.kyori.adventure.text.Component;
@@ -35,6 +36,11 @@ public class ChatFilterModule extends PlexModule
         config.load();
     }
 
+    public static PlexApi getApi()
+    {
+        return module.api();
+    }
+
     @Override
     public void enable()
     {
@@ -43,6 +49,8 @@ public class ChatFilterModule extends PlexModule
         registerListener(new ChatListener());
         registerListener(new CommandPreProcessListener());
         registerListener(new SignListener());
+
+        FilterEngine.reload();
 
         addDefaultMessage("castingOblivion", "<red>{0} is casting oblivion over {1}", "0 - The command sender", "1 - The target");
         addDefaultMessage("playerEviscerated", "<red>{1} will be completely eviscerated", "1 - The target");
@@ -59,19 +67,21 @@ public class ChatFilterModule extends PlexModule
         // Unregistering listeners / commands is handled by Plex
     }
 
-    public static void punishPlayer(PlexPlayer plexPlayer, ViolationSource source)
+    public static void punishPlayer(PlexPlayerView player, ViolationSource source)
     {
-        Player player = DataUtils.getPlayer(plexPlayer.getUuid()).getPlayer();
-
-        Punishment punishment = new Punishment(plexPlayer.getUuid(), Bukkit.getPlayerUniqueId(player.getName()));
-        punishment.setType(PunishmentType.BAN);
-        punishment.setPunishedUsername(plexPlayer.getName());
-        punishment.setEndDate(null);
-        punishment.setCustomTime(false);
-        punishment.setActive(true);
-        punishment.setReason("Hate Speech (" + source + ")");
-        punishment.setIp(plexPlayer.getIps().getLast());
-        Plex.get().getPunishmentManager().punish(plexPlayer, punishment);
+        PunishmentRequest request = new PunishmentRequest(
+                player.uuid(),
+                player.uuid(),        // punisher = self, since it's an auto-ban
+                "ChatFilter",         // punisher display name
+                player.ips().getLast(),
+                player.name(),
+                PunishmentType.BAN,
+                "Hate Speech (" + source + ")",
+                false,                // customTime
+                true,                 // active
+                null                  // endDate — null = permanent
+        );
+        getApi().punishments().punish(player, request);
     }
 
     public static void logFilteredMessage(Component message)
@@ -87,6 +97,9 @@ public class ChatFilterModule extends PlexModule
                     .append(message)
                     .appendNewline());
         }
-        PlexLog.log(message);
+
+        String plain = PlainTextComponentSerializer
+                .plainText().serialize(message);
+        getApi().logging().info(plain);
     }
 }

@@ -1,16 +1,16 @@
 package dev.plex.listener;
 
 import dev.plex.ChatFilterModule;
+import dev.plex.api.player.PlexPlayerView;
 import dev.plex.filter.FilterEngine;
 import dev.plex.filter.FilterResult;
-import dev.plex.player.PlexPlayer;
-import dev.plex.util.PlexUtils;
 import dev.plex.utilities.FilterUtils;
 import dev.plex.utilities.ViolationSource;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.SignChangeEvent;
+
+import java.util.Optional;
 
 public class SignListener extends PlexListener
 {
@@ -19,29 +19,33 @@ public class SignListener extends PlexListener
     public void onSignWrite(SignChangeEvent event)
     {
         Player player = event.getPlayer();
-        PlexPlayer plexPlayer = plugin.getPlayerCache().getPlexPlayer(player.getUniqueId());
+        Optional<? extends PlexPlayerView> plexPlayerOpt = ChatFilterModule.getApi().players().byUuid(player.getUniqueId());
+        if (plexPlayerOpt.isEmpty()) return;
+        PlexPlayerView plexPlayer = plexPlayerOpt.get();
 
         for (String line : event.getLines())
         {
+            if (line == null) continue;
+
             FilterResult result = FilterEngine.check(line);
-            if (result.matched())
+            if (!result.matched()) continue;
+
+            event.setCancelled(true);
+            final String matchedLine = line;
+
+            ChatFilterModule.getApi().scheduler().runEntity(player, () ->
             {
-                event.setCancelled(true);
+                if (!player.isOnline()) return;
 
-                Bukkit.getScheduler().runTask(plugin, () ->
-                {
-                    if (!player.isOnline()) return;
-
-                    ChatFilterModule.punishPlayer(plexPlayer, ViolationSource.Anvil);
-                    FilterUtils.filterTriggeredAlert(plexPlayer, ViolationSource.Anvil);
-                    ChatFilterModule.logFilteredMessage(PlexUtils.mmDeserialize(
-                            "<red>Player " + player + " has been permanently banned writing  '" + line + "' on a sign"));
-                    FilterUtils.discordAlert(plexPlayer, ViolationSource.Anvil);
-                    FilterUtils.crashPlayer(player);
-                    player.kick(FilterUtils.kickMessage(ViolationSource.Anvil));
-                });
-                return;
-            }
+                ChatFilterModule.punishPlayer(plexPlayer, ViolationSource.Sign);
+                FilterUtils.filterTriggeredAlert(plexPlayer, ViolationSource.Sign);
+                ChatFilterModule.logFilteredMessage(ChatFilterModule.getApi().messages().miniMessage(
+                        "<red>Player " + player.getName() + " has been permanently banned for writing '" + matchedLine + "' on a sign"));
+                FilterUtils.discordAlert(plexPlayer, ViolationSource.Sign);
+                FilterUtils.crashPlayer(player);
+                player.kick(FilterUtils.kickMessage(ViolationSource.Sign));
+            });
+            return;
         }
     }
 }

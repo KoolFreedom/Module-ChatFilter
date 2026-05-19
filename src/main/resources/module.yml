@@ -2,3 +2,4 @@ name: Module-ChatFilter
 main: dev.plex.ChatFilterModule
 description: Chat filter module for Plex
 version: 1.0
+apiCompatibility: 1

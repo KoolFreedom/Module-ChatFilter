@@ -19,11 +19,11 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
-    compileOnly("dev.plex:server:1.7-SNAPSHOT")
+    compileOnly("dev.plex:api:2.0-SNAPSHOT")
 }
 
 group = "dev.plex"
-version = "1.0"
+version = "2.0-SNAPSHOT"
 description = "Module-ChatFilter"
 
 java {

@@ -1,26 +1,24 @@
 package dev.plex.command;
 
-import dev.plex.cache.DataUtils;
+import dev.plex.ChatFilterModule;
+import dev.plex.api.player.PlexPlayerView;
+import dev.plex.api.punishment.PunishmentRequest;
+import dev.plex.api.punishment.PunishmentType;
 import dev.plex.command.annotation.CommandParameters;
 import dev.plex.command.annotation.CommandPermissions;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import dev.plex.command.exception.PlayerNotFoundException;
-import dev.plex.player.PlexPlayer;
-import dev.plex.punishment.Punishment;
-import dev.plex.punishment.PunishmentType;
-import dev.plex.util.PlexUtils;
 import dev.plex.utilities.FilterUtils;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @CommandParameters(name = "obliterate", description = "Unleash divine punishment upon someone", usage = "/<command> <player> [reason]")
 @CommandPermissions(permission = "plex.chatfilter.obliterate")
@@ -34,13 +32,10 @@ public class ObliterateCommand extends PlexCommand
             return usage();
         }
 
-        PlexPlayer plexPlayer = DataUtils.getPlayer(strings[0]);
-        if (plexPlayer == null)
-        {
-            throw new PlayerNotFoundException();
-        }
+        PlexPlayerView plexPlayer = ChatFilterModule.getApi().players().byName(strings[0])
+                .orElseThrow(PlayerNotFoundException::new);
 
-        Player target = getNonNullPlayer(plexPlayer.getName());
+        Player target = getNonNullPlayer(plexPlayer.name());
 
         for (int i = 0; i < 30; i++)
         {
@@ -50,54 +45,63 @@ public class ObliterateCommand extends PlexCommand
         target.setFireTicks(200);
         target.setGameMode(GameMode.ADVENTURE);
 
-        PlexUtils.broadcast(PlexUtils.messageComponent("castingOblivion", commandSender, target));
+        broadcast(messageComponent("castingOblivion", commandSender, target));
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> PlexUtils.broadcast(messageComponent("playerEviscerated", target)), 2);
+        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+                broadcast(messageComponent("playerEviscerated", target)), 2);
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "lp user " + target + " clear");
+        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+        {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "lp user " + target.getName() + " clear");
             if (target.isOp()) target.setOp(false);
             if (target.isWhitelisted()) target.setWhitelisted(false);
         }, 2);
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> target.setHealth(0), 10);
+        ChatFilterModule.getApi().scheduler().runEntityLater(target, () -> target.setHealth(0), 10);
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> PlexUtils.broadcast(messageComponent("playerEradicated", target)), 30);
+        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+                broadcast(messageComponent("playerEradicated", target)), 30);
 
         FilterUtils.crashPlayer(target);
 
-        Punishment punishment = new Punishment(plexPlayer.getUuid(), getUUID(commandSender));
-        punishment.setType(PunishmentType.BAN);
-        punishment.setPunishedUsername(plexPlayer.getName());
-        punishment.setEndDate(null);
-        punishment.setCustomTime(false);
-        punishment.setActive(true);
-        punishment.setReason(messageString("obliterateReason"));
-        punishment.setIp(player != null ? player.getAddress().getAddress().getHostAddress().trim() : plexPlayer.getIps().getLast());
+        PunishmentRequest request = new PunishmentRequest(
+                plexPlayer.uuid(),
+                getUUID(commandSender),
+                commandSender.getName(),
+                player != null
+                        ? player.getAddress().getAddress().getHostAddress().trim()
+                        : plexPlayer.ips().getLast(),
+                plexPlayer.name(),
+                PunishmentType.BAN,
+                messageString("obliterateReason"),
+                false,
+                true,
+                null
+        );
 
-        Bukkit.getScheduler().runTaskLater(plugin, () ->
-                plugin.getPunishmentManager().punish(plexPlayer, punishment), 38);
-        Bukkit.getScheduler().runTaskLater(plugin, () ->
-                PlexUtils.broadcast(messageComponent("targetPermBanned")), 38);
+        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+                ChatFilterModule.getApi().punishments().punish(plexPlayer, request), 38);
+        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+                broadcast(messageComponent("targetPermBanned", commandSender, target)), 38);
+
         return null;
     }
 
     @Override
     public @NotNull List<String> smartTabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException
     {
-        if (silentCheckPermission(sender, this.getPermission()))
+        if (!silentCheckPermission(sender, this.getPermission()))
         {
-            if (args.length == 1)
-            {
-                return Arrays.asList("option1", "option2", "option3");
-            }
-
-            if (args.length == 2)
-            {
-                return Arrays.asList("option3", "option4");
-            }
             return Collections.emptyList();
         }
+
+        if (args.length == 1)
+        {
+            return ChatFilterModule.getApi().players().onlineNames().stream()
+                    .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
         return Collections.emptyList();
     }
 }

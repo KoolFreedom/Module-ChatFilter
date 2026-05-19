@@ -1,25 +1,24 @@
 package dev.plex.utilities;
 
-import dev.plex.player.PlexPlayer;
-import dev.plex.util.PlexUtils;
+import dev.plex.ChatFilterModule;
+import dev.plex.api.player.PlexPlayerView;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 
 public class FilterUtils
 {
-    public static void filterTriggeredAlert(PlexPlayer player, ViolationSource source)
+    public static void filterTriggeredAlert(PlexPlayerView player, ViolationSource source)
     {
-        PlexUtils.broadcast(PlexUtils.messageComponent("filterTriggered", Bukkit.getConsoleSender(), source, player));
+        ChatFilterModule.getApi().messages().broadcast(ChatFilterModule.getApi().messages().messageComponent("filterTriggered", Bukkit.getConsoleSender(), source, player));
     }
 
-    public static void discordAlert(PlexPlayer player, ViolationSource source)
+    public static void discordAlert(PlexPlayerView player, ViolationSource source)
     {
         if (!Bukkit.getPluginManager().isPluginEnabled("DiscordSRV")) return;
 
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "discord bcast **Player " + player.getName() + " has been permanently banned for triggering the " + source.name().toLowerCase() + " filter**");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "discord bcast **Player " + player.name() + " has been permanently banned for triggering the " + source.name().toLowerCase() + " filter**");
     }
 
     public static void crashPlayer(Player victim)
@@ -38,14 +37,14 @@ public class FilterUtils
 
     public static Component kickMessage(ViolationSource source)
     {
-        return PlexUtils.mmCustomDeserialize(
-                """
-                        <dark_red><b>!! CAUGHT !!</b></dark_red>
-                        
-                        <gray>Prohibited language detected.</gray>
-                        <gray>Source: <white>: <source>
-                        <red>This server enforces a zero-tolerance policy for discrimination""",
-                Placeholder.unparsed("source", source.name())
-        );
+        String text = """
+            <dark_red><b>!! CAUGHT !!</b></dark_red>
+            
+            <gray>Prohibited language detected.</gray>
+            <gray>Source: <white><source></white></gray>
+            <red>This server enforces a zero-tolerance policy for discrimination"""
+                .replace("<source>", source.name());
+
+        return ChatFilterModule.getApi().messages().miniMessage(text);
     }
 }
