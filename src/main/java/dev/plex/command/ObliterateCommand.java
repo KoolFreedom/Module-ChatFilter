@@ -85,7 +85,7 @@ public class ObliterateCommand extends SimplePlexCommand
         );
 
         module.api().scheduler().runEntityLater(target, () ->
-                ChatFilterModule.getApi().punishments().punish(plexPlayer, request), 38);
+                module.api().punishments().punish(plexPlayer, request), 38);
         module.api().scheduler().runEntityLater(target, () ->
                 broadcast(messageComponent("targetPermBanned", commandSender, target)), 38);
 
