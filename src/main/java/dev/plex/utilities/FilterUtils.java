@@ -11,7 +11,7 @@ public class FilterUtils
 {
     public static void filterTriggeredAlert(PlexPlayerView player, ViolationSource source)
     {
-        ChatFilterModule.getApi().messages().broadcast(ChatFilterModule.getApi().messages().messageComponent("filterTriggered", Bukkit.getConsoleSender(), source, player));
+        ChatFilterModule.getModule().api().messages().broadcast(ChatFilterModule.getModule().api().messages().messageComponent("filterTriggered", Bukkit.getConsoleSender(), source, player));
     }
 
     public static void discordAlert(PlexPlayerView player, ViolationSource source)
@@ -45,6 +45,6 @@ public class FilterUtils
             <red>This server enforces a zero-tolerance policy for discrimination"""
                 .replace("<source>", source.name());
 
-        return ChatFilterModule.getApi().messages().miniMessage(text);
+        return ChatFilterModule.getModule().api().messages().miniMessage(text);
     }
 }

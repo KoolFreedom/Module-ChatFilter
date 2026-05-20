@@ -23,7 +23,7 @@ public final class FilterEngine
             String regex = "\\b" + Pattern.quote(clean) + "\\b";
             RULES.put(rule, Pattern.compile(regex));
         }
-        ChatFilterModule.getApi().logging().info("Filter engine reloaded.");
+        ChatFilterModule.getModule().api().logging().info("Filter engine reloaded.");
     }
 
     public static FilterResult check(String input)

@@ -14,12 +14,19 @@ import java.util.Optional;
 
 public class ChatListener extends PlexListener
 {
+    private final ChatFilterModule module;
+
+    public ChatListener(ChatFilterModule module)
+    {
+        this.module = module;
+    }
+
     @EventHandler
     @SuppressWarnings("deprecation")
     private void onPlayerChatMessageThatIsASlur(AsyncPlayerChatEvent event)
     {
         Player player = event.getPlayer();
-        Optional<? extends PlexPlayerView> plexPlayerOpt = ChatFilterModule.getApi().players().byUuid(player.getUniqueId());
+        Optional<? extends PlexPlayerView> plexPlayerOpt = module.api().players().byUuid(player.getUniqueId());
         if (plexPlayerOpt.isEmpty()) return;
         PlexPlayerView plexPlayer = plexPlayerOpt.get();
 
@@ -30,13 +37,13 @@ public class ChatListener extends PlexListener
         event.setCancelled(true);
         player.sendMessage(String.format(event.getFormat(), player.getDisplayName(), rawMessage));
 
-        ChatFilterModule.getApi().scheduler().runEntity(player, () ->
+        module.api().scheduler().runEntity(player, () ->
         {
             if (!player.isOnline()) return;
 
             ChatFilterModule.punishPlayer(plexPlayer, ViolationSource.Chat);
             FilterUtils.filterTriggeredAlert(plexPlayer, ViolationSource.Chat);
-            ChatFilterModule.logFilteredMessage(ChatFilterModule.getApi().messages().miniMessage(
+            ChatFilterModule.logFilteredMessage(module.api().messages().miniMessage(
                     "<red>Player " + player.getName() + " has been permanently banned for saying: " + rawMessage));
             FilterUtils.discordAlert(plexPlayer, ViolationSource.Chat);
             FilterUtils.crashPlayer(player);

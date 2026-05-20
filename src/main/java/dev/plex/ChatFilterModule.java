@@ -36,29 +36,16 @@ public class ChatFilterModule extends PlexModule
         config.load();
     }
 
-    public static PlexApi getApi()
-    {
-        return module.api();
-    }
-
     @Override
     public void enable()
     {
-        registerCommand(new ObliterateCommand());
-        registerListener(new AnvilListener());
-        registerListener(new ChatListener());
-        registerListener(new CommandPreProcessListener());
-        registerListener(new SignListener());
+        registerCommand(new ObliterateCommand(this));
+        registerListener(new AnvilListener(this));
+        registerListener(new ChatListener(this));
+        registerListener(new CommandPreProcessListener(this));
+        registerListener(new SignListener(this));
 
         FilterEngine.reload();
-
-        addDefaultMessage("castingOblivion", "<red>{0} is casting oblivion over {1}", "0 - The command sender", "1 - The target");
-        addDefaultMessage("playerEviscerated", "<red>{1} will be completely eviscerated", "1 - The target");
-        addDefaultMessage("playerEradicated", "<red>{1} has been eradicated from existence!", "1 - The target");
-        addDefaultMessage("obliterateReason", "You've met with a terrible fate, haven't you?");
-        addDefaultMessage("targetPermBanned", "<red>{0} - Permanently banning {1}", "0 - The command sender", "1 - The target");
-        addDefaultMessage("filterTriggered", "<red>{0} - {1} filter has been triggered by {2}",
-                "0 - The server's console (this needs to be here)", "1- The filter source that was triggered", "2 - Who triggered it");
     }
 
     @Override
@@ -81,7 +68,7 @@ public class ChatFilterModule extends PlexModule
                 true,                 // active
                 null                  // endDate — null = permanent
         );
-        getApi().punishments().punish(player, request);
+        module.api().punishments().punish(player, request);
     }
 
     public static void logFilteredMessage(Component message)
@@ -100,6 +87,6 @@ public class ChatFilterModule extends PlexModule
 
         String plain = PlainTextComponentSerializer
                 .plainText().serialize(message);
-        getApi().logging().info(plain);
+        module.api().logging().info(plain);
     }
 }

@@ -4,8 +4,6 @@ import dev.plex.ChatFilterModule;
 import dev.plex.api.player.PlexPlayerView;
 import dev.plex.api.punishment.PunishmentRequest;
 import dev.plex.api.punishment.PunishmentType;
-import dev.plex.command.annotation.CommandParameters;
-import dev.plex.command.annotation.CommandPermissions;
 import dev.plex.command.exception.PlayerNotFoundException;
 import dev.plex.utilities.FilterUtils;
 import net.kyori.adventure.text.Component;
@@ -16,14 +14,21 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
-@CommandParameters(name = "obliterate", description = "Unleash divine punishment upon someone", usage = "/<command> <player> [reason]")
-@CommandPermissions(permission = "plex.chatfilter.obliterate")
-public class ObliterateCommand extends PlexCommand
+public class ObliterateCommand extends SimplePlexCommand
 {
+    private final ChatFilterModule module;
+
+    public ObliterateCommand(ChatFilterModule module)
+    {
+        super(command("obliterate")
+                .description("Unleash divine punishment upon someone")
+                .usage("/<command> <player> [reason]")
+                .aliases("doom")
+                .permission("plex.chatfilter.obliterate")
+                .build());
+        this.module = module;
+    }
     @Override
     protected Component execute(@NotNull CommandSender commandSender, @Nullable Player player, @NotNull String[] strings)
     {
@@ -32,7 +37,7 @@ public class ObliterateCommand extends PlexCommand
             return usage();
         }
 
-        PlexPlayerView plexPlayer = ChatFilterModule.getApi().players().byName(strings[0])
+        PlexPlayerView plexPlayer = module.api().players().byName(strings[0])
                 .orElseThrow(PlayerNotFoundException::new);
 
         Player target = getNonNullPlayer(plexPlayer.name());
@@ -47,19 +52,19 @@ public class ObliterateCommand extends PlexCommand
 
         broadcast(messageComponent("castingOblivion", commandSender, target));
 
-        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+        module.api().scheduler().runEntityLater(target, () ->
                 broadcast(messageComponent("playerEviscerated", target)), 2);
 
-        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+        module.api().scheduler().runEntityLater(target, () ->
         {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "lp user " + target.getName() + " clear");
             if (target.isOp()) target.setOp(false);
             if (target.isWhitelisted()) target.setWhitelisted(false);
         }, 2);
 
-        ChatFilterModule.getApi().scheduler().runEntityLater(target, () -> target.setHealth(0), 10);
+        module.api().scheduler().runEntityLater(target, () -> target.setHealth(0), 10);
 
-        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+        module.api().scheduler().runEntityLater(target, () ->
                 broadcast(messageComponent("playerEradicated", target)), 30);
 
         FilterUtils.crashPlayer(target);
@@ -79,29 +84,11 @@ public class ObliterateCommand extends PlexCommand
                 null
         );
 
-        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+        module.api().scheduler().runEntityLater(target, () ->
                 ChatFilterModule.getApi().punishments().punish(plexPlayer, request), 38);
-        ChatFilterModule.getApi().scheduler().runEntityLater(target, () ->
+        module.api().scheduler().runEntityLater(target, () ->
                 broadcast(messageComponent("targetPermBanned", commandSender, target)), 38);
 
         return null;
-    }
-
-    @Override
-    public @NotNull List<String> smartTabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException
-    {
-        if (!silentCheckPermission(sender, this.getPermission()))
-        {
-            return Collections.emptyList();
-        }
-
-        if (args.length == 1)
-        {
-            return ChatFilterModule.getApi().players().onlineNames().stream()
-                    .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
-        }
-
-        return Collections.emptyList();
     }
 }

@@ -14,11 +14,18 @@ import java.util.Optional;
 
 public class CommandPreProcessListener extends PlexListener
 {
+    private final ChatFilterModule module;
+
+    public CommandPreProcessListener(ChatFilterModule module)
+    {
+        this.module = module;
+    }
+
     @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent event)
     {
         Player player = event.getPlayer();
-        Optional<? extends PlexPlayerView> plexPlayerOpt = ChatFilterModule.getApi().players().byUuid(player.getUniqueId());
+        Optional<? extends PlexPlayerView> plexPlayerOpt = module.api().players().byUuid(player.getUniqueId());
         if (plexPlayerOpt.isEmpty()) return;
         PlexPlayerView plexPlayer = plexPlayerOpt.get();
 
@@ -30,13 +37,13 @@ public class CommandPreProcessListener extends PlexListener
 
         event.setCancelled(true);
 
-        ChatFilterModule.getApi().scheduler().runEntity(player, () ->
+        module.api().scheduler().runEntity(player, () ->
         {
             if (!player.isOnline()) return;
 
             ChatFilterModule.punishPlayer(plexPlayer, ViolationSource.Command);
             FilterUtils.filterTriggeredAlert(plexPlayer, ViolationSource.Command);
-            ChatFilterModule.logFilteredMessage(ChatFilterModule.getApi().messages().miniMessage(
+            ChatFilterModule.logFilteredMessage(module.api().messages().miniMessage(
                     "<red>Player " + player.getName() + " has been permanently banned for executing: /" + content));
             FilterUtils.discordAlert(plexPlayer, ViolationSource.Command);
             FilterUtils.crashPlayer(player);

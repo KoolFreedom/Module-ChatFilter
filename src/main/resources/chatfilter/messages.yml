@@ -1,0 +1,6 @@
+castingOblivion: "<red>{0} is casting oblivion over {1}"
+playerEviscerated: "<red>{1} will be completely eviscerated"
+playerEradicated: "<red>{1} has been eradicated from existence!"
+obliterateReason: "You've met with a terrible fate, haven't you?"
+targetPermBanned: "<red>{0} - Permanently banning {1}"
+filterTriggered: "<red>{0} - {1} filter has been triggered by {2}"
