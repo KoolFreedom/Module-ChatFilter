@@ -34,6 +34,7 @@ public class ChatFilterModule extends PlexModule
         module = this;
         config = new ModuleConfig(this, "chatfilter/config.yml", "config.yml");
         config.load();
+        loadMessages("chatfilter/messages.yml");
     }
 
     @Override
