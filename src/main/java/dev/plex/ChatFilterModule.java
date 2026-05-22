@@ -35,12 +35,12 @@ public class ChatFilterModule extends PlexModule
         config = new ModuleConfig(this, "chatfilter/config.yml", "config.yml");
         config.load();
         loadMessages("chatfilter/messages.yml");
+        registerCommand(new ObliterateCommand(this));
     }
 
     @Override
     public void enable()
     {
-        registerCommand(new ObliterateCommand(this));
         registerListener(new AnvilListener(this));
         registerListener(new ChatListener(this));
         registerListener(new CommandPreProcessListener(this));
